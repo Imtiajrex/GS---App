@@ -1,21 +1,33 @@
+import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import {
+	KeyboardAvoidingView,
+	SafeAreaView,
+	StyleSheet,
+	Text,
+	View,
+} from "react-native";
+import theme from "./src/lib/theme";
 import RootNav from "./src/navigation/RootNav";
-
+import Results from "./src/screens/Results";
 export default function App() {
 	return (
-		<View style={styles.container}>
-			<StatusBar style="auto" />
-			<RootNav />
-		</View>
+		<>
+			<View style={styles.container}>
+				{/* <NavigationContainer>
+					<RootNav />
+				</NavigationContainer> */}
+				<Results />
+			</View>
+			<StatusBar hidden={true} />
+		</>
 	);
 }
 
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		alignItems: "center",
-		justifyContent: "center",
+		backgroundColor: theme.color.background,
 	},
 });
