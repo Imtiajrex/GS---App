@@ -3,6 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import theme from "../lib/theme";
 import { SharedElement } from "react-navigation-shared-element";
+import maps from "../lib/maps";
 export default function Match({ route, navigation }) {
 	const { item } = route.params;
 	return (
@@ -47,7 +48,7 @@ export default function Match({ route, navigation }) {
 				</View>
 				<View style={styles.image_wrapper}>
 					<SharedElement id={`item.${item.id}.image`}>
-						<Image source={item.map} style={styles.image} />
+						<Image source={maps[item.map]} style={styles.image} />
 					</SharedElement>
 				</View>
 			</View>
@@ -60,19 +61,32 @@ export default function Match({ route, navigation }) {
 				</Text>
 				<View style={styles.info}>
 					<SharedElement id={`item.${item.id}.time`} style={styles.time}>
-						<Text style={styles.timeText}>
+						<View style={styles.time}>
 							<Ionicons
 								name="time"
 								size={22}
 								color={theme.color.secondaryText}
 							/>
-							{item.time}
-						</Text>
+							<Text style={styles.timeText}>{item.time}</Text>
+						</View>
+					</SharedElement>
+					<SharedElement id={`item.${item.id}.date`}>
+						<View style={styles.time}>
+							<Ionicons
+								name="calendar"
+								size={22}
+								color={theme.color.secondaryText}
+							/>
+							<Text style={styles.timeText}>{item.date}</Text>
+						</View>
 					</SharedElement>
 				</View>
 			</View>
-			<TouchableOpacity style={styles.button}>
-				<Text style={styles.buttonText}>Join The Game - ৳250</Text>
+			<TouchableOpacity
+				style={styles.button}
+				onPress={() => alert("Sorry, You have insufficient funds!")}
+			>
+				<Text style={styles.buttonText}>Join The Game - ৳{item.fee}</Text>
 			</TouchableOpacity>
 		</View>
 	);
@@ -137,6 +151,13 @@ const styles = StyleSheet.create({
 		color: theme.color.secondaryText,
 		marginVertical: 10,
 		lineHeight: 30,
+	},
+	info: {
+		flexDirection: "row",
+	},
+	time: {
+		marginRight: 20,
+		flexDirection: "row",
 	},
 	timeText: {
 		color: theme.color.secondaryText,

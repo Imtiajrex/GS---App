@@ -1,10 +1,12 @@
 import React from "react";
 import TabNav from "./TabNav";
 import { createSharedElementStackNavigator } from "react-navigation-shared-element";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { Easing } from "react-native-reanimated";
 import Match from "../screens/Match";
-
+import SignIn from "../screens/SignIn";
+import SignUp from "../screens/SignUp";
+import LoadingScreen from "../screens/LoadingScreen";
 const forFade = ({ current, closing }) => ({
 	cardStyle: {
 		opacity: current.progress,
@@ -31,7 +33,10 @@ const options = {
 export default function RootNav() {
 	return (
 		<View style={{ flex: 1, width: "100%" }}>
-			<Stack.Navigator initialRouteName="Tab" headerMode="none">
+			<Stack.Navigator initialRouteName={"Loading"} headerMode="none">
+				<Stack.Screen name="Loading" component={LoadingScreen} />
+				<Stack.Screen name="Signin" component={SignIn} />
+				<Stack.Screen name="Signup" component={SignUp} />
 				<Stack.Screen name="Tab" component={TabNav} />
 				<Stack.Screen
 					name="Match"
@@ -51,6 +56,11 @@ export default function RootNav() {
 							},
 							{
 								id: `item.${item.id}.time`,
+								animation: "fade",
+								resize: "clip",
+							},
+							{
+								id: `item.${item.id}.date`,
 								animation: "fade",
 								resize: "clip",
 							},

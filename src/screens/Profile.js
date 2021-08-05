@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
 	View,
 	Text,
@@ -7,19 +7,51 @@ import {
 	TouchableOpacity,
 	TextInput,
 	KeyboardAvoidingView,
+	FlatList,
 } from "react-native";
 import theme from "../lib/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { AnimatePresence, MotiView } from "moti";
 import { useState } from "react";
+import firebase from "firebase";
+import { AuthContext } from "../contexts/AuthProvider";
+import { useEffect } from "react";
+import AnimatedLottieView from "lottie-react-native";
 export default function Profile({ navigation }) {
+	const { user } = useContext(AuthContext);
 	const [topup, setTopup] = useState(false);
 	const [withdraw, setWithdraw] = useState(false);
+	const [transactions, setTransactions] = useState([]);
+	useEffect(() => {
+		firebase
+			.firestore()
+			.collection("Transaction")
+			.onSnapshot((snapshot) => {
+				setTransactions(
+					snapshot.docs.map((doc) => {
+						// console.log({ ...doc.data(), User: "" });
+						return { ...doc.data(), User: "" };
+					})
+				);
+			});
+	}, []);
+	const logout = () => {
+		firebase
+			.auth()
+			.signOut()
+			.then(() => navigation.navigate("Signin"))
+			.catch((err) => console.log(err));
+	};
 	return (
 		<KeyboardAvoidingView style={styles.container}>
 			<View style={styles.top}>
 				<View style={{ ...styles.details, marginBottom: 40 }}>
-					<Text style={styles.title}>Hi, Salman</Text>
+					<View style={styles.title_logout}>
+						<Text style={styles.title}>Hi, {user.name}</Text>
+						<TouchableOpacity style={styles.logout} onPress={logout}>
+							<Text style={styles.logout_text}>Logout</Text>
+						</TouchableOpacity>
+					</View>
 					<Image
 						source={require("../../assets/user.png")}
 						style={styles.user_image}
@@ -27,7 +59,7 @@ export default function Profile({ navigation }) {
 				</View>
 				<View style={styles.details}>
 					<Text style={styles.wallet_text}>My Wallet</Text>
-					<Text style={styles.cash}>৳2500</Text>
+					<Text style={styles.cash}>৳{user.balance}</Text>
 				</View>
 				<View style={styles.details}>
 					<TouchableOpacity style={styles.topup} onPress={() => setTopup(true)}>
@@ -46,28 +78,32 @@ export default function Profile({ navigation }) {
 				<Text style={styles.title}>Recent Transactions</Text>
 
 				<View style={styles.transactions}>
-					<View style={styles.transaction}>
-						<View style={styles.transaction_info}>
-							<View
-								style={{
-									...styles.icon,
-									backgroundColor: "rgba(37,212,223,0.2)",
-								}}
-							>
-								<Ionicons
-									name="gift"
-									size={35}
-									color={theme.color.tertiary}
-									style={{ opacity: 1 }}
-								/>
-							</View>
-							<View style={styles.info}>
-								<Text style={styles.info_title}>1st prize</Text>
-								<Text style={styles.info_description}>Kalahari game</Text>
-							</View>
-						</View>
-						<Text style={styles.money}>৳2000+</Text>
-					</View>
+					{transactions.length != 0 ? (
+						<FlatList
+							data={transactions}
+							keyExtractor={(_, index) => index.toString()}
+							showsVerticalScrollIndicator={false}
+							renderItem={({ item, index }) => (
+								<View style={styles.transaction}>
+									<View style={styles.transaction_info}>
+										<TransactionType type={item.type} />
+										<View style={styles.info}>
+											<Text style={styles.info_title}>{item?.title}</Text>
+											<Text style={styles.info_description}>
+												{item?.description}
+											</Text>
+										</View>
+									</View>
+									<Text style={styles.money}>
+										৳{item?.amount}
+										{item?.balance_type == "in" ? "+" : "-"}
+									</Text>
+								</View>
+							)}
+						/>
+					) : (
+						<Text style={styles.not_found}>No Transactions Available</Text>
+					)}
 				</View>
 			</View>
 
@@ -80,91 +116,196 @@ export default function Profile({ navigation }) {
 		</KeyboardAvoidingView>
 	);
 }
-const Topup = ({ setTopup }) => (
-	<MotiView
-		from={{ opacity: 0 }}
-		animate={{ opacity: 1 }}
-		exit={{
-			opacity: 0,
-		}}
-		style={styles.overlay}
-	>
+const Topup = ({ setTopup }) => {
+	const [submit, setSubmit] = useState(false);
+	const [trx, setTrx] = useState("");
+	return (
 		<MotiView
-			from={{ scale: 0 }}
-			animate={{ scale: 1 }}
+			from={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
 			exit={{
-				scale: 0,
+				opacity: 0,
 			}}
-			style={styles.topup_modal}
+			style={styles.overlay}
 		>
-			<TouchableOpacity style={styles.close} onPress={() => setTopup(false)}>
-				<Ionicons name="close" size={25} color={theme.color.primaryText} />
-			</TouchableOpacity>
-			<Text style={styles.modal_title}>Top up</Text>
-			<View style={styles.inputs}>
-				<TextInput
-					placeholder="Transaction ID"
-					style={styles.input}
-					placeholderTextColor="#2A3849"
-				/>
-				<TouchableOpacity style={styles.button}>
-					<Text style={styles.button_text}>Recharge Account</Text>
+			<MotiView
+				from={{ scale: 0 }}
+				animate={{ scale: 1 }}
+				exit={{
+					scale: 0,
+				}}
+				style={styles.topup_modal}
+			>
+				<TouchableOpacity style={styles.close} onPress={() => setTopup(false)}>
+					<Ionicons name="close" size={25} color={theme.color.primaryText} />
 				</TouchableOpacity>
-			</View>
+
+				{submit ? (
+					<View style={{ flexDirection: "column", alignItems: "center" }}>
+						<AnimatedLottieView
+							loop={false}
+							autoPlay
+							source={require("../../assets/ok.json")}
+							style={{ width: 150, height: 150 }}
+						/>
+						<Text
+							style={{
+								fontSize: theme.font.regular,
+								color: theme.color.primaryText,
+								marginVertical: 20,
+							}}
+						>
+							Topup Request Submitted!
+						</Text>
+					</View>
+				) : (
+					<>
+						<Text style={styles.modal_title}>Top up</Text>
+
+						<View style={styles.inputs}>
+							<TextInput
+								placeholder="Transaction ID"
+								style={styles.input}
+								onChangeText={(text) => setTrx(text)}
+								placeholderTextColor="#2A3849"
+							/>
+							<TouchableOpacity
+								style={styles.button}
+								onPress={() => trx.length > 0 && setSubmit(true)}
+							>
+								<Text style={styles.button_text}>Recharge Account</Text>
+							</TouchableOpacity>
+						</View>
+					</>
+				)}
+			</MotiView>
 		</MotiView>
-	</MotiView>
-);
-const Withdraw = ({ setWithdraw }) => (
-	<MotiView
-		from={{ opacity: 0 }}
-		animate={{ opacity: 1 }}
-		exit={{
-			opacity: 0,
-		}}
-		style={styles.overlay}
-	>
+	);
+};
+const Withdraw = ({ setWithdraw }) => {
+	const [number, setNumber] = useState("");
+	const [amount, setAmount] = useState(0);
+	const [submit, setSubmit] = useState(false);
+	return (
 		<MotiView
-			from={{ scale: 0 }}
-			animate={{ scale: 1 }}
+			from={{ opacity: 0 }}
+			animate={{ opacity: 1 }}
 			exit={{
-				scale: 0,
+				opacity: 0,
 			}}
-			style={styles.withdraw_modal}
+			style={styles.overlay}
 		>
-			<TouchableOpacity style={styles.close} onPress={() => setWithdraw(false)}>
-				<Ionicons name="close" size={25} color={theme.color.primaryText} />
-			</TouchableOpacity>
-			<Text style={styles.modal_title}>Withdraw</Text>
-			<View style={styles.inputs}>
-				<TextInput
-					placeholder="Bkash Account Number"
-					style={styles.input}
-					placeholderTextColor="#2A3849"
-				/>
-				<TextInput
-					placeholder="Amount"
-					style={styles.input}
-					placeholderTextColor="#2A3849"
-				/>
-				<TouchableOpacity style={styles.button}>
-					<Text style={styles.button_text}>Recharge Account</Text>
+			<MotiView
+				from={{ scale: 0 }}
+				animate={{ scale: 1 }}
+				exit={{
+					scale: 0,
+				}}
+				style={styles.withdraw_modal}
+			>
+				<TouchableOpacity
+					style={styles.close}
+					onPress={() => setWithdraw(false)}
+				>
+					<Ionicons name="close" size={25} color={theme.color.primaryText} />
 				</TouchableOpacity>
-			</View>
+
+				{submit ? (
+					<View style={{ flexDirection: "column", alignItems: "center" }}>
+						<AnimatedLottieView
+							autoPlay
+							loop={false}
+							source={require("../../assets/ok.json")}
+							style={{ width: 150, height: 150 }}
+						/>
+						<Text
+							style={{
+								fontSize: theme.font.regular,
+								color: theme.color.primaryText,
+								marginVertical: 20,
+							}}
+						>
+							Withdraw Request Submitted!
+						</Text>
+					</View>
+				) : (
+					<>
+						<Text style={styles.modal_title}>Top up</Text>
+
+						<View style={styles.inputs}>
+							<TextInput
+								placeholder="Bkash Number"
+								style={styles.input}
+								onChangeText={(text) => setNumber(text)}
+								placeholderTextColor="#2A3849"
+							/>
+							<TextInput
+								placeholder="Amount"
+								style={styles.input}
+								onChangeText={(text) => setAmount(text)}
+								placeholderTextColor="#2A3849"
+							/>
+							<TouchableOpacity
+								style={styles.button}
+								onPress={() =>
+									number.length > 0 && amount.length > 0 && setSubmit(true)
+								}
+							>
+								<Text style={styles.button_text}>Recharge Account</Text>
+							</TouchableOpacity>
+						</View>
+					</>
+				)}
+			</MotiView>
 		</MotiView>
-	</MotiView>
-);
+	);
+};
+const TransactionType = ({ type }) => {
+	return (
+		<View
+			style={{
+				...styles.icon,
+				backgroundColor:
+					type == "topup"
+						? "rgba(247,56,89,0.2)"
+						: type == "withdraw"
+						? "rgba(37,212,223,0.2)"
+						: "rgba(241,209,138,0.2)",
+			}}
+		>
+			<Ionicons
+				name={
+					type == "topup"
+						? "cloud-upload"
+						: type == "withdraw"
+						? "ios-cash"
+						: "gift"
+				}
+				size={35}
+				color={
+					type == "topup"
+						? theme.color.secondary
+						: type == "withdraw"
+						? theme.color.primary
+						: theme.color.tertiary
+				}
+				style={{ opacity: 1 }}
+			/>
+		</View>
+	);
+};
 const styles = StyleSheet.create({
 	container: { flex: 1, backgroundColor: theme.color.background },
 	top: { backgroundColor: theme.color.card, padding: 20, paddingBottom: 60 },
 	transaction_wrapper: { position: "relative", padding: 20, paddingTop: 0 },
 	ball: {
-		width: theme.width * 2,
-		height: theme.width * 2,
+		width: theme.width * 4,
+		height: theme.width * 4,
 		position: "absolute",
-		top: "-44%",
-		transform: [{ translateX: -theme.width / 2 }],
+		top: "-30%",
+		transform: [{ translateX: -theme.width * 1.5 }],
 		backgroundColor: theme.color.background,
-		borderRadius: theme.width,
+		borderRadius: theme.width * 2,
 	},
 	details: {
 		flexDirection: "row",
@@ -302,11 +443,11 @@ const styles = StyleSheet.create({
 	input: {
 		width: "100%",
 		padding: 20,
-		textAlign: "center",
+		textAlign: "left",
 		borderRadius: 50,
 		fontSize: theme.font.regular,
 		color: theme.color.primaryText,
-		backgroundColor: theme.color.background,
+		backgroundColor: "#0A0E13",
 		marginVertical: 10,
 	},
 	button: {
@@ -322,5 +463,9 @@ const styles = StyleSheet.create({
 	button_text: {
 		fontSize: theme.font.regular,
 		color: theme.color.primary,
+	},
+	logout_text: {
+		color: theme.color.primary,
+		fontSize: theme.font.small,
 	},
 });

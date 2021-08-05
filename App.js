@@ -1,25 +1,28 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import {
-	KeyboardAvoidingView,
-	SafeAreaView,
-	StyleSheet,
-	Text,
-	View,
-} from "react-native";
+import { SafeAreaView, StyleSheet } from "react-native";
 import theme from "./src/lib/theme";
 import RootNav from "./src/navigation/RootNav";
-import Results from "./src/screens/Results";
+import firebase from "firebase";
+import firebaseConfig from "./src/lib/firebaseConfig";
+import AuthProvider from "./src/contexts/AuthProvider";
 export default function App() {
+	if (!firebase.apps.length) {
+		firebase.initializeApp(firebaseConfig);
+	} else {
+		firebase.app(); // if already initialized, use that one
+	}
+
 	return (
 		<>
-			<View style={styles.container}>
-				{/* <NavigationContainer>
-					<RootNav />
-				</NavigationContainer> */}
-				<Results />
-			</View>
+			<SafeAreaView style={styles.container}>
+				<AuthProvider>
+					<NavigationContainer>
+						<RootNav />
+					</NavigationContainer>
+				</AuthProvider>
+			</SafeAreaView>
 			<StatusBar hidden={true} />
 		</>
 	);

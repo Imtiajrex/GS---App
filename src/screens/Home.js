@@ -14,35 +14,56 @@ import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import theme from "../lib/theme";
 import { SharedElement } from "react-navigation-shared-element";
+import firebase from "firebase";
+import { useEffect } from "react";
+import maps from "../lib/maps";
+import AnimatedLottieView from "lottie-react-native";
 const category = ["All", "Solo", "Duo", "Squad"];
-const items = [
-	{
-		title: "Free fire Foundation map game",
-		time: "8:00pm",
-		first: "850",
-		second: "500",
-		third: "250",
-		kill: "25",
-		description:
-			"Fight till you're the last person left to win the match. For every kill you'll get a reward. And Ranking in top three will also get you reward",
-		map: require("../image/_Kalahari.png"),
-		id: 1,
-	},
-	{
-		title: "Free fire confinement map game",
-		time: "8:00pm",
-		first: "850",
-		second: "500",
-		third: "250",
-		kill: "25",
-		map: require("../image/Confinement.png"),
-		description:
-			"Fight till you're the last person left to win the match. For every kill you'll get a reward. And Ranking in top three will also get you reward",
-		id: 2,
-	},
-];
 export default function Home({ navigation }) {
 	const [activeCategory, setCategory] = useState("All");
+	const [items, setItems] = useState([]);
+	useEffect(() => {
+		firebase
+			.firestore()
+			.collection("Match")
+			.onSnapshot((snapshot) => {
+				setItems(
+					snapshot.docs.map((doc) => {
+						return doc.data();
+					})
+				);
+			});
+	}, []);
+	useEffect(() => {
+		if (activeCategory != "All")
+			firebase
+				.firestore()
+				.collection("Match")
+				.where("type", "==", activeCategory)
+				.onSnapshot((snapshot) => {
+					setItems(
+						snapshot.docs.map((doc) => {
+							return doc.data();
+						})
+					);
+					console.log(
+						snapshot.docs.map((doc) => {
+							return doc.data();
+						})
+					);
+				});
+		else
+			firebase
+				.firestore()
+				.collection("Match")
+				.onSnapshot((snapshot) => {
+					setItems(
+						snapshot.docs.map((doc) => {
+							return doc.data();
+						})
+					);
+				});
+	}, [activeCategory]);
 	return (
 		<SafeAreaView style={styles.container}>
 			<FlatList
@@ -70,51 +91,78 @@ export default function Home({ navigation }) {
 				horizontal
 				showsHorizontalScrollIndicator={false}
 			/>
-			<FlatList
-				data={items}
-				keyExtractor={(_, index) => index.toString()}
-				horizontal
-				showsHorizontalScrollIndicator={false}
-				snapToInterval={theme.width}
-				decelerationRate={"fast"}
-				renderItem={({ item }) => (
-					<View style={styles.match_wrapper}>
-						<TouchableWithoutFeedback
-							onPress={() => navigation.navigate("Match", { item })}
-						>
-							<View style={styles.match}>
-								<SharedElement
-									id={`item.${item.id}.image`}
-									style={styles.match_image}
-								>
-									<Image source={item.map} style={styles.match_image} />
-								</SharedElement>
-								<View style={styles.details}>
+			{items.length > 0 ? (
+				<FlatList
+					data={items}
+					keyExtractor={(_, index) => index.toString()}
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					snapToInterval={theme.width}
+					decelerationRate={"fast"}
+					renderItem={({ item }) => (
+						<View style={styles.match_wrapper}>
+							<TouchableWithoutFeedback
+								onPress={() => navigation.navigate("Match", { item })}
+							>
+								<View style={styles.match}>
 									<SharedElement
-										id={`item.${item.id}.title`}
-										style={styles.title}
+										id={`item.${item.id}.image`}
+										style={styles.match_image}
 									>
-										<Text style={styles.titleText}>{item.title}</Text>
+										<Image source={maps[item.map]} style={styles.match_image} />
 									</SharedElement>
-									<SharedElement
-										id={`item.${item.id}.time`}
-										style={styles.time}
-									>
-										<Text style={styles.timeText}>
-											<Ionicons
-												name="time"
-												size={22}
-												color={theme.color.secondaryText}
-											/>
-											{item.time}
-										</Text>
-									</SharedElement>
+									<View style={styles.details}>
+										<SharedElement
+											id={`item.${item.id}.title`}
+											style={styles.title}
+										>
+											<Text style={styles.titleText}>{item.title}</Text>
+										</SharedElement>
+										<View style={styles.extra_info}>
+											<SharedElement id={`item.${item.id}.time`}>
+												<View style={styles.time}>
+													<Text style={styles.timeText}>
+														<Ionicons
+															name="time"
+															size={22}
+															color={theme.color.secondaryText}
+														/>
+														{item.time}
+													</Text>
+												</View>
+											</SharedElement>
+											<SharedElement id={`item.${item.id}.date`}>
+												<View style={styles.time}>
+													<Ionicons
+														name="calendar"
+														size={22}
+														color={theme.color.secondaryText}
+													/>
+													<Text style={styles.timeText}>{item.date}</Text>
+												</View>
+											</SharedElement>
+										</View>
+									</View>
 								</View>
-							</View>
-						</TouchableWithoutFeedback>
-					</View>
-				)}
-			/>
+							</TouchableWithoutFeedback>
+						</View>
+					)}
+				/>
+			) : (
+				<View style={styles.info}>
+					<AnimatedLottieView
+						autoPlay={true}
+						style={{
+							width: 200,
+							height: 200,
+							backgroundColor: theme.color.background,
+							marginVertical: 20,
+						}}
+						source={require("../../assets/sorry.json")}
+					/>
+					<Text style={styles.info_text}>No Active Matches</Text>
+				</View>
+			)}
 		</SafeAreaView>
 	);
 }
@@ -125,6 +173,15 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 		position: "relative",
+	},
+	info: {
+		position: "absolute",
+		alignItems: "center",
+		justifyContent: "center",
+	},
+	info_text: {
+		fontSize: theme.font.big,
+		color: theme.color.primaryText,
 	},
 	title: {
 		color: theme.color.primaryText,
@@ -171,10 +228,11 @@ const styles = StyleSheet.create({
 	title: {
 		width: "60%",
 	},
-	time: {
+	extra_info: {
 		width: "40%",
 		alignItems: "center",
 	},
+	time: { alignItems: "center", flexDirection: "row", marginVertical: 5 },
 	titleText: {
 		color: theme.color.primaryText,
 		fontSize: theme.font.regular,

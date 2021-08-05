@@ -11,6 +11,8 @@ import Home from "../screens/Home";
 import Profile from "../screens/Profile";
 import { Ionicons } from "@expo/vector-icons";
 import theme from "../lib/theme";
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthProvider";
 const Tab = createBottomTabNavigator();
 
 function MyTabBar({ state, descriptors, navigation }) {
@@ -137,7 +139,11 @@ function MyTabBar({ state, descriptors, navigation }) {
 	);
 }
 
-export default function TabNav() {
+export default function TabNav({ navigation }) {
+	const { user } = useContext(AuthContext);
+	React.useEffect(() => {
+		if (user != null) navigation.navigate("Signin");
+	}, []);
 	return (
 		<Tab.Navigator
 			tabBar={(props) => <MyTabBar {...props} />}

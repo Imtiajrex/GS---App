@@ -1,0 +1,15 @@
+export default {
+	kalahari: require("../image/_Kalahari.png"),
+	bayfront: require("../image/Bayfront.png"),
+	commandpost: require("../image/CommandPost.png"),
+	confinement: require("../image/Confinement.png"),
+	foundation: require("../image/Foundation.png"),
+	mammoth: require("../image/Mammoth.png"),
+	oldhampton: require("../image/OldHampton.png"),
+	refinery: require("../image/Refinery.png"),
+	santacatarina: require("../image/SantaCatarina.png"),
+	shrines: require("../image/Shrines.png"),
+	stoneridge: require("../image/StoneRidge.png"),
+	themaze: require("../image/TheMaze.png"),
+	thesub: require("../image/TheSub.png"),
+};
