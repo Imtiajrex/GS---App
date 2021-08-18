@@ -9,6 +9,7 @@ import {
 	KeyboardAvoidingView,
 	ScrollView,
 	ActivityIndicator,
+	Alert,
 } from "react-native";
 import { useState } from "react";
 import theme from "../lib/theme";
@@ -34,7 +35,7 @@ export default function SignUp({ navigation, route }) {
 					firebase
 						.firestore()
 						.collection("User")
-						.where("email", "==", user.email)
+						.where("email", "==", userSession.email)
 						.get()
 						.then((querySnapshot) => {
 							querySnapshot.forEach((doc) => {
@@ -55,11 +56,13 @@ export default function SignUp({ navigation, route }) {
 			.where("email", "==", email)
 			.get()
 			.then((querySnapshot) => {
+				setLoading(false);
 				querySnapshot.forEach((doc) => {
 					setUser({ ...doc.data(), id: doc.id });
 				});
 				navigation.navigate("Tab");
-			});
+			})
+			.catch((err) => console.log(err));
 	};
 	const validate = () => {
 		const newError = { email: "", password: "" };
@@ -104,6 +107,7 @@ export default function SignUp({ navigation, route }) {
 						var errorCode = error.code;
 						var errorMessage = error.message;
 						console.log(errorCode, errorMessage);
+						Alert.alert(errorCode, errorMessage);
 						setLoading(false);
 					});
 			else setLoading(false);

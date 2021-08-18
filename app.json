@@ -17,13 +17,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.imtiajrex.GS"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#101317"
-      }
+      },
+      "package": "com.imtiajrex.GS"
     },
     "web": {
       "favicon": "./assets/favicon.png"

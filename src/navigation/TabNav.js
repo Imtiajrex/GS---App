@@ -142,7 +142,7 @@ function MyTabBar({ state, descriptors, navigation }) {
 export default function TabNav({ navigation }) {
 	const { user } = useContext(AuthContext);
 	React.useEffect(() => {
-		if (user != null) navigation.navigate("Signin");
+		if (user == null) navigation.navigate("Signin");
 	}, []);
 	return (
 		<Tab.Navigator
